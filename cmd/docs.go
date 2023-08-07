@@ -26,74 +26,47 @@ import (
 	"io"
 	"os"
 
-	"github.com/Serares/pscanner/scan"
 	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 )
 
-// scanCmd represents the scan command
-var scanCmd = &cobra.Command{
-	Use:   "scan",
-	Short: "Run port scanning on existing hosts",
+// docsCmd represents the docs command
+var docsCmd = &cobra.Command{
+	Use:   "docs",
+	Short: "Generate documentation for your command",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		hostsFile, err := cmd.Flags().GetString("hosts-file")
+		dir, err := cmd.Flags().GetString("dir")
 		if err != nil {
 			return err
 		}
 
-		ports, err := cmd.Flags().GetStringSlice("ports")
-		if err != nil {
-			return err
+		if dir == "" {
+			if dir, err = os.MkdirTemp("", "pscanner"); err != nil {
+				return err
+			}
 		}
-
-		return scanAction(os.Stdout, hostsFile, ports)
+		return docAction(os.Stdout, dir)
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(scanCmd)
-
-	scanCmd.Flags().StringSliceP("ports", "p", []string{"22-443"}, "ports to scan")
+	rootCmd.AddCommand(docsCmd)
+	docsCmd.Flags().StringP("dir", "d", "", "Destination directory for docs")
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// scanCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// docsCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
+	// docsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func scanAction(w io.Writer, hostsFile string, ports []string) error {
-	hl := &scan.HostsList{}
-
-	if err := hl.Load(hostsFile); err != nil {
+func docAction(w io.Writer, dir string) error {
+	if err := doc.GenMarkdownTree(rootCmd, dir); err != nil {
 		return err
 	}
-
-	results := scan.Run(hl, ports)
-
-	return printResults(w, results)
-}
-
-func printResults(out io.Writer, results []scan.Results) error {
-	message := ""
-	for _, r := range results {
-		message += fmt.Sprintf("%s:", r.Host)
-
-		if r.NotFound {
-			message += fmt.Sprintf(" Host not found\n\n")
-			continue
-		}
-
-		message += fmt.Sprintln()
-
-		for _, p := range r.PortStates {
-			message += fmt.Sprintf("\t%d: %s\n", p.Port, p.Open)
-		}
-
-		message += fmt.Sprintln()
-	}
-
-	_, err := fmt.Fprint(out, message)
+	_, err := fmt.Fprintf(w, "Documentaiton successfully created in %s\n", dir)
 	return err
 }

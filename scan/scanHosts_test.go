@@ -34,7 +34,7 @@ func TestRunHostsFound(t *testing.T) {
 	hl := &scan.HostsList{}
 	hl.Add(host)
 
-	ports := []int{}
+	ports := []string{}
 	// initialize ports 1 open, 1 closed
 	for _, tc := range testCases {
 		// searching on port '0' is going to return a random port
@@ -50,12 +50,7 @@ func TestRunHostsFound(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		port, err := strconv.Atoi(portStr)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		ports = append(ports, port)
+		ports = append(ports, portStr)
 		if tc.name == "ClosedPort" {
 			ln.Close()
 		}
@@ -76,12 +71,16 @@ func TestRunHostsFound(t *testing.T) {
 		t.Fatalf("Expected 2 port states, got %d instead\n", len(res[0].PortStates))
 	}
 	for i, tc := range testCases {
-		if res[0].PortStates[i].Port != ports[i] {
-			t.Errorf("Expected port %d, got %d instead\n", ports[0],
+		portToCheck, err := strconv.Atoi(ports[i])
+		if err != nil {
+			t.Fatalf("error converting port to int %v", ports[i])
+		}
+		if res[0].PortStates[i].Port != portToCheck {
+			t.Errorf("Expected port %s, got %d instead\n", ports[0],
 				res[0].PortStates[i].Port)
 		}
 		if res[0].PortStates[i].Open.String() != tc.expectState {
-			t.Errorf("Expected port %d to be %s\n", ports[i], tc.expectState)
+			t.Errorf("Expected port %s to be %s\n", ports[i], tc.expectState)
 		}
 	}
 }
@@ -90,7 +89,7 @@ func TestRunHostNotFound(t *testing.T) {
 	host := "389.389.389.389"
 	hl := &scan.HostsList{}
 	hl.Add(host)
-	res := scan.Run(hl, []int{})
+	res := scan.Run(hl, []string{})
 	// Verify results for HostNotFound test
 	if len(res) != 1 {
 		t.Fatalf("Expected 1 results, got %d instead\n", len(res))

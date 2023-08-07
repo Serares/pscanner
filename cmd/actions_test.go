@@ -6,7 +6,6 @@ import (
 	"io"
 	"net"
 	"os"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -155,7 +154,7 @@ func TestScanAction(t *testing.T) {
 	tf, cleanup := setup(t, hosts, true)
 	defer cleanup()
 
-	ports := []int{}
+	ports := []string{}
 	// Init ports, 1 open, 1 closed
 	for i := 0; i < 2; i++ {
 		ln, err := net.Listen("tcp", net.JoinHostPort("localhost", "0"))
@@ -167,19 +166,15 @@ func TestScanAction(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		port, err := strconv.Atoi(portStr)
-		if err != nil {
-			t.Fatal(err)
-		}
-		ports = append(ports, port)
+		ports = append(ports, portStr)
 		if i == 1 {
 			ln.Close()
 		}
 	}
 
 	expectedOut := fmt.Sprintln("localhost:")
-	expectedOut += fmt.Sprintf("\t%d: open\n", ports[0])
-	expectedOut += fmt.Sprintf("\t%d: closed\n", ports[1])
+	expectedOut += fmt.Sprintf("\t%s: open\n", ports[0])
+	expectedOut += fmt.Sprintf("\t%s: closed\n", ports[1])
 	expectedOut += fmt.Sprintln()
 	expectedOut += fmt.Sprintln("unknownhostoutthere: Host not found")
 	expectedOut += fmt.Sprintln()
