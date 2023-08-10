@@ -44,8 +44,26 @@ var scanCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		isTcp, err := cmd.Flags().GetBool("tcp")
+		if err != nil {
+			return err
+		}
+		isUdp, err := cmd.Flags().GetBool("udp")
+		if err != nil {
+			return err
+		}
 
-		return scanAction(os.Stdout, hostsFile, ports)
+		if !isTcp && !isUdp {
+			return fmt.Errorf("please specify a flag for network scan")
+		}
+
+		cfg := &scan.ScanCfg{
+			Tcp:   isTcp,
+			Udp:   isUdp,
+			Ports: ports,
+		}
+
+		return scanAction(os.Stdout, hostsFile, cfg)
 	},
 }
 
@@ -53,6 +71,8 @@ func init() {
 	rootCmd.AddCommand(scanCmd)
 
 	scanCmd.Flags().StringSliceP("ports", "p", []string{"22-443"}, "ports to scan")
+	scanCmd.Flags().BoolP("tcp", "T", false, "use a TCP scan")
+	scanCmd.Flags().BoolP("udp", "U", false, "use a UDP scan")
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
@@ -63,20 +83,27 @@ func init() {
 	// is called directly, e.g.:
 }
 
-func scanAction(w io.Writer, hostsFile string, ports []string) error {
+func scanAction(w io.Writer, hostsFile string, cfg *scan.ScanCfg) error {
 	hl := &scan.HostsList{}
 
 	if err := hl.Load(hostsFile); err != nil {
 		return err
 	}
 
-	results := scan.Run(hl, ports)
+	results := scan.Run(hl, cfg)
 
-	return printResults(w, results)
+	return printResults(w, results, cfg)
 }
 
-func printResults(out io.Writer, results []scan.Results) error {
+func printResults(out io.Writer, results []scan.Results, cfg *scan.ScanCfg) error {
 	message := ""
+	if cfg.Tcp {
+		message += fmt.Sprint("TCP scan: \n")
+	}
+	if cfg.Udp {
+		message += fmt.Sprint("UDP scan: \n")
+	}
+
 	for _, r := range results {
 		message += fmt.Sprintf("%s:", r.Host)
 

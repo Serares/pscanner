@@ -137,7 +137,7 @@ func TestIntegration(t *testing.T) {
 		t.Fatalf("Expected no error, got %q\n", err)
 	}
 
-	if err := scanAction(&stdout, tf, nil); err != nil {
+	if err := scanAction(&stdout, tf, &scan.ScanCfg{}); err != nil {
 		t.Fatalf("expected no error, got %q\n", err)
 	}
 	// Test integration output
@@ -172,7 +172,8 @@ func TestScanAction(t *testing.T) {
 		}
 	}
 
-	expectedOut := fmt.Sprintln("localhost:")
+	expectedOut := fmt.Sprintln("TCP scan: ")
+	expectedOut += fmt.Sprintf("localhost:\n")
 	expectedOut += fmt.Sprintf("\t%s: open\n", ports[0])
 	expectedOut += fmt.Sprintf("\t%s: closed\n", ports[1])
 	expectedOut += fmt.Sprintln()
@@ -181,7 +182,7 @@ func TestScanAction(t *testing.T) {
 	// Define var to capture scan output
 	var out bytes.Buffer
 	// Execute scan and capture output
-	if err := scanAction(&out, tf, ports); err != nil {
+	if err := scanAction(&out, tf, &scan.ScanCfg{Ports: ports, Tcp: true}); err != nil {
 		t.Fatalf("Expected no error, got %q\n", err)
 	}
 	// Test scan output

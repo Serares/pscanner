@@ -56,7 +56,7 @@ func TestRunHostsFound(t *testing.T) {
 		}
 	}
 
-	res := scan.Run(hl, ports)
+	res := scan.Run(hl, &scan.ScanCfg{Ports: ports, Tcp: true})
 	if len(res) != 1 {
 		t.Fatalf("Expected 1 results, got %d instead\n", len(res))
 	}
@@ -89,7 +89,7 @@ func TestRunHostNotFound(t *testing.T) {
 	host := "389.389.389.389"
 	hl := &scan.HostsList{}
 	hl.Add(host)
-	res := scan.Run(hl, []string{})
+	res := scan.Run(hl, &scan.ScanCfg{Ports: []string{}, Tcp: true})
 	// Verify results for HostNotFound test
 	if len(res) != 1 {
 		t.Fatalf("Expected 1 results, got %d instead\n", len(res))
