@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+// TODO tidy up this file
+// try to improve the performance of the scans
 type PortState struct {
 	Port int
 	Open state
